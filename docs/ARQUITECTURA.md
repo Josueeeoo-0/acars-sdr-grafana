@@ -77,3 +77,9 @@ La rama StatsD/Graphite transporta estadísticas, no las líneas JSON de los men
 Detener y volver a iniciar los mismos contenedores conserva sus datos internos. Recrearlos puede perder ese estado si no existe un respaldo o una configuración adicional de persistencia. Los archivos JSONL son la copia local de los mensajes recibidos.
 
 Un único programa debe utilizar el RTL-SDR a la vez. SDR# sirve para observar la señal en una sesión separada; durante la captura, el receptor queda a cargo de `acarsdec`.
+
+## Reproducción de la muestra guardada
+
+La [muestra incluida](../ejemplos/README.md) tiene un recorrido separado: `ejemplos/recepcion_acars.jsonl` → `scripts/cargar_muestra.py` → Loki → Grafana. El cargador envía directamente las líneas JSON, sin abrir el receptor ni pasar por Alloy.
+
+Los registros reproducidos usan `job="acarsdec-demo"`; los de recepción real mantienen `job="acarsdec"`. El selector **Origen de datos** del dashboard elige cuál consultar. El cargador conserva el texto y el timestamp del JSON, y desplaza solo la hora de ingestión al presente para que la demostración pueda verse en un intervalo reciente.

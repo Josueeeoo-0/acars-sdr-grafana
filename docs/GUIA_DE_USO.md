@@ -5,13 +5,16 @@ Esta guía describe cómo usar el proyecto en una estación Linux con un RTL-SDR
 ## Requisitos
 
 - Linux; la captura documentada se hizo con DragonOS.
-- Bash y `acarsdec` v4.6 con soporte moderno para `--rtlsdr` y `--output` en formatos de texto y JSON. La salida JSON debe admitir `path` y `rotate=daily`. Consulte el proyecto [acarsdec](https://github.com/f00b4r0/acarsdec) para conocer el decodificador.
+- Para recepción por radio: Bash y `acarsdec` v4.6 con soporte moderno para `--rtlsdr` y `--output` en formatos de texto y JSON. La salida JSON debe admitir `path` y `rotate=daily`. Consulte el proyecto [acarsdec](https://github.com/f00b4r0/acarsdec) para conocer el decodificador.
 - Un RTL-SDR compatible y una antena para la banda recibida, conectados a la estación y disponibles para `acarsdec`.
 - Docker Engine y el complemento Docker Compose con el comando `docker compose` (v2 o posterior).
 - `curl` para comprobar la respuesta de Loki y un navegador para abrir Grafana.
+- Para explorar la muestra sin receptor: Python 3 y su biblioteca estándar; no requiere módulos de `pip`, `acarsdec` ni RTL-SDR.
 - Acceso a Grafana en el puerto 3000 y a Loki en el puerto 3100. El stack publica también Graphite en 8080, 2003 y 8125/UDP.
 
 El stack fija Grafana 13.2.3, Loki 3.7.8 y Alloy 1.21.0. Graphite es opcional para la exploración ACARS de esta guía: la configuración StatsD existe, pero sus métricas ACARS no se validaron. SDR# es una herramienta opcional de observación visual independiente; NanoVNA es opcional para medir la antena. Ninguno es necesario para la ingestión JSONL en Loki.
+
+La guía describe la recepción en directo. Para probar los mensajes y el dashboard sin hardware, siga la [reproducción de la muestra incluida](../ejemplos/README.md).
 
 ## Preparar la captura
 
@@ -93,6 +96,8 @@ La configuración no aprovisiona automáticamente la fuente de datos ni el dashb
 2. En **URL**, escriba `http://loki:3100`, seleccione **Save & test** y confirme que la conexión responde correctamente.
 3. Abra **Dashboards → New → Import**. Seleccione `acars-dashboard.json`, elija la fuente de datos Loki cuando Grafana lo solicite e importe el dashboard. Consulte la [documentación de importación de dashboards](https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/import-dashboards/).
 
+En **Origen de datos**, mantenga `acarsdec` para la recepción en directo. La opción `acarsdec-demo` muestra la reproducción de la muestra. Si actualiza un dashboard importado anteriormente, vuelva a importar el JSON y confirme su reemplazo para incorporar ese selector.
+
 En **Explore**, elija la fuente Loki, cambie a **Code**, introduzca esta consulta y ejecútela:
 
 ```logql
@@ -121,4 +126,4 @@ Si el archivo contiene mensajes pero Grafana muestra **No data**, compruebe el i
 
 ## Sobre la muestra incluida
 
-Las imágenes y los resultados describen una observación ya realizada; el repositorio no incluye el conjunto de datos JSONL original. En aquella sesión se vieron 9 mensajes, 4 matrículas y 3 mensajes con texto. Esos conteos son evidencia de esa recepción y de su intervalo, no una garantía para otras ubicaciones, antenas o momentos.
+Los nueve registros de la sesión se incluyen en [`ejemplos/recepcion_acars.jsonl`](../ejemplos/recepcion_acars.jsonl). Conservan las matrículas, vuelos, textos, niveles y fechas originales. El [cargador de la muestra](../ejemplos/README.md) permite explorar esos datos sin receptor y usa un origen separado de las nuevas recepciones. Los conteos 9/4/3 describen esta muestra; una recepción propia puede tener otros resultados.

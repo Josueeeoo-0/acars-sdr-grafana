@@ -111,7 +111,7 @@ Los eventos del intervalo aparecen en Grafana usando su timestamp de ACARS. La s
 
 ## Dashboard y resultados
 
-![Dashboard ACARS v4 con resultados 9, 4 y 3](imagenes/15.png)
+![Dashboard ACARS con resultados 9, 4 y 3](imagenes/15.png)
 
 *Resultado observado: nueve mensajes, cuatro matrículas distintas y tres mensajes con texto. Los registros sin errores de decodificación se presentan como INFO.*
 
@@ -198,12 +198,19 @@ La visualización presentada se basa en los mensajes ACARS almacenados en Loki. 
 
 ## Componentes del proyecto
 
+La muestra de la sesión se conserva en [`ejemplos/recepcion_acars.jsonl`](ejemplos/recepcion_acars.jsonl): nueve registros, cuatro matrículas y tres mensajes con texto. El [procedimiento de reproducción](ejemplos/README.md) permite explorarla en Loki y Grafana sin conectar un RTL-SDR. El archivo conserva las fechas originales; el cargador identifica la reproducción con `job="acarsdec-demo"` y desplaza únicamente las horas de ingestión para consultarla en un intervalo reciente.
+
+El dashboard permite elegir **Origen de datos**: `acarsdec` para recepción de la estación o `acarsdec-demo` para la muestra reproducida. Los mensajes de ambos orígenes se consultan por separado.
+
 | Archivo o carpeta | Propósito |
 |---|---|
 | `acars.alloy` | Lectura de JSONL, asignación de timestamp y etiquetas de baja cardinalidad |
 | `docker-compose.acars.yml` | Servicio auxiliar de Alloy para el stack existente |
 | `acars-dashboard.json` | Dashboard de nueve paneles para Grafana |
 | `start-acars.sh` | Configuración del decodificador y salida JSONL/StatsD |
+| `ejemplos/recepcion_acars.jsonl` | Los nueve mensajes de la sesión documentada |
+| [Muestra y reproducción](ejemplos/README.md) | Procedencia de los datos y visualización sin receptor |
+| `scripts/cargar_muestra.py` | Validación de la muestra y envío a Loki con Python 3 |
 | [Arquitectura](docs/ARQUITECTURA.md) | Qué hace cada programa y cómo circula un mensaje |
 | [Lectura de los datos](docs/RESULTADOS.md) | Ejemplos comentados de los mensajes de la sesión |
 | [Guía de uso](docs/GUIA_DE_USO.md) | Programas necesarios, recepción y visualización paso a paso |

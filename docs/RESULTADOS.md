@@ -1,6 +1,6 @@
 # Cómo leer los datos recibidos
 
-El dashboard resume una sesión; este documento explica los registros que hay detrás de sus números. Los ejemplos proceden de la recepción del **20 de octubre de 2026 en 131.725 MHz**. Para iniciar una recepción propia, véase la [guía de uso](GUIA_DE_USO.md).
+El dashboard resume una sesión; este documento explica los registros que hay detrás de sus números. Los ejemplos proceden de la recepción del **20 de octubre de 2026 en 131.725 MHz**. Los nueve mensajes se conservan en [la muestra JSONL](../ejemplos/recepcion_acars.jsonl) y pueden [reproducirse sin receptor](../ejemplos/README.md). Para iniciar una recepción propia, véase la [guía de uso](GUIA_DE_USO.md).
 
 ## Una aeronave y un vuelo son identificadores distintos
 

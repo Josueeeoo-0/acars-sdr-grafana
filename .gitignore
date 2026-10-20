@@ -1,4 +1,4 @@
-# Datos recibidos y muestras; se publica configuración y documentación.
+# Capturas locales; la muestra documentada se publica como excepción.
 /data/
 /backups/
 /airband_rf/
@@ -7,6 +7,7 @@
 /validation-tools/
 /extras/
 *.jsonl
+!/ejemplos/recepcion_acars.jsonl
 *.u8
 *.wav
 *.f32
