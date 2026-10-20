@@ -1,36 +1,79 @@
-# Arquitectura de la integración ACARS
+# Cómo funciona la estación
 
-## Flujo de datos
+Este documento explica qué sucede entre la antena y el dashboard. Para ejecutar los programas, véase la [guía de uso](GUIA_DE_USO.md); para interpretar un mensaje, la [lectura de los datos](RESULTADOS.md).
 
-```text
-Antena → RTL-SDR → acarsdec (DragonOS) → JSONL en data/acars/
-                                           ↓ montaje de solo lectura
-                                   Alloy (Docker) → Loki → Grafana
-                                   └── estado Alloy en volumen nombrado
+## Qué hace cada componente
 
-acarsdec ── StatsD/UDP 8125 ──→ Graphite (configurado; recepción no validada)
-```
+| Componente | Qué recibe | Qué entrega |
+|---|---|---|
+| Antena | La señal de radio que llega a la estación | Señal eléctrica al receptor |
+| RTL-SDR Blog V4 | Señal de la antena | Muestras digitales al ordenador por USB |
+| `acarsdec`, en DragonOS | Muestras del receptor | Mensajes ACARS decodificados en terminal y archivos JSONL |
+| Grafana Alloy, en Docker | Las líneas de los archivos JSONL | Registros con fecha y etiquetas enviados a Loki |
+| Loki, en Docker | Registros enviados por Alloy | Almacenamiento y consultas de los mensajes |
+| Grafana, en Docker | Respuestas a las consultas de Loki | Contadores, gráficas y listas de mensajes en el navegador |
 
-`start-acars.sh` ejecuta `acarsdec` en el host DragonOS. Muestra la salida de texto en terminal y escribe JSON en `data/acars/`; la salida JSON configura rotación diaria (`rotate=daily`). El archivo fuente de Alloy (`acars.alloy`) descubre `*.jsonl`, empieza desde el inicio (`tail_from_end = false`), vuelve a buscar archivos cada cinco segundos y entrega cada línea JSON a Loki. Alloy extrae `timestamp`, `station_id` y `freq`; la hora de evento usa `timestamp` Unix. La línea original permanece intacta. El montaje `/logs` está marcado como solo lectura.
+Docker ejecuta los servicios de observación. El acceso al receptor USB lo realiza `acarsdec` directamente desde DragonOS. En esta configuración el decodificador no está dentro de un contenedor.
 
-## Red y puertos
+![Flujo de la estación ACARS](../imagenes/18.png)
 
-El colector Alloy corre en Docker Compose. Dentro de la red Compose, publica a Loki por el nombre de servicio `loki` en `http://loki:3100/loki/api/v1/push`. Para las comprobaciones desde DragonOS, el procedimiento documentado consulta Loki en `http://localhost:3100/ready`; requiere que el puerto 3100 esté publicado por el stack existente. Grafana se abre en `http://localhost:3000`, según la publicación del stack base.
+## El recorrido de un mensaje
 
-El launcher configura el destino StatsD en `127.0.0.1:8125/UDP` por defecto. Esa opción está presente en el comando de `acarsdec`, pero no se verificó la recepción ni el nombre o los valores de las series resultantes en Graphite. El puerto TCP 2003 es la entrada Carbon del servicio Graphite y no se utiliza para enviar los JSON ACARS.
+1. El receptor se sintoniza en **131.725 MHz** y entrega las muestras a `acarsdec`.
+2. Cuando el decodificador reconoce un mensaje, imprime sus campos y escribe un objeto JSON en una línea del archivo. **JSONL** significa precisamente un objeto JSON por línea.
+3. El script `start-acars.sh` guarda los archivos en `data/acars/`. La opción `rotate=daily` añade una fecha UTC al nombre: por ejemplo, `acars_20261020.jsonl`.
+4. Alloy ve esa misma carpeta como `/logs` dentro del contenedor. El montaje es de solo lectura: puede leer la captura, pero no modificarla.
+5. Alloy descubre los archivos `*.jsonl` cada cinco segundos. Extrae `timestamp`, `station_id` y `freq`; utiliza el primero como hora del registro y los otros dos como etiquetas.
+6. Loki recibe la línea JSON original. Cuando Grafana solicita un intervalo, Loki busca los registros correspondientes y devuelve los resultados de la consulta.
 
-## Archivos y estado persistente
+Por ejemplo, `tail="CC-BAH"` viaja dentro del JSON. Una consulta puede extraerlo y filtrar los mensajes de esa matrícula. El dashboard no necesita acceder al RTL-SDR ni leer el archivo local por su cuenta.
 
-- `data/acars/` conserva los JSONL del decodificador y se monta como solo lectura en Alloy. La rotación diaria se solicita a `acarsdec`; el descubrimiento de Alloy incluye los archivos rotados que terminan en `.jsonl`.
-- `acars-alloy-data` es un volumen nombrado para `--storage.path=/var/lib/alloy/data`. Alloy guarda allí las posiciones de lectura y puede retomar después de reiniciar.
-- La extensión no añade volúmenes de persistencia a Grafana, Loki ni Graphite. El estado y los datos de esos servicios base siguen dependiendo de su Compose original. Antes de recrearlos, hay que respaldar y migrar sus datos.
+La [documentación de acarsdec](https://github.com/f00b4r0/acarsdec#usage) describe sus salidas; la de [loki.source.file](https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.file/) explica cómo Alloy sigue los archivos y mantiene sus posiciones de lectura.
 
-La estación usa un RTL-SDR: solo un proceso puede abrir el dispositivo a la vez. Para iniciar `acarsdec`, hay que cerrar SDR#, `rtl_power`, `dumpvdl2` u otro lector del mismo receptor. Las capturas de SDR# documentan una observación visual separada; no son parte de la recepción continua de esta arquitectura.
+## La hora del mensaje y la hora de la pantalla
 
-## Consultas y severidad visual
+El campo `timestamp` es una fecha Unix: segundos desde el inicio de 1970, con su fracción de segundo. Alloy lo convierte en la hora de evento que guarda Loki.
 
-Los streams usan las etiquetas de baja cardinalidad `job`, `station` y `freq`. Campos variables como `tail`, `flight`, `label`, `level`, `noise` y `text` se mantienen en el JSON y se extraen en las consultas del dashboard, no se usan como etiquetas indexadas.
+Grafana presenta esa hora en la zona elegida por el navegador. Por eso **19:24 UTC y 14:24 en Lima representan el mismo instante**. La fecha UTC del nombre del archivo puede diferir de la fecha local cerca de medianoche.
 
-En el dashboard v4, los paneles de logs presentan `error=0` como `INFO`, un `error` no vacío distinto de cero como `WARN` y un campo ausente como `UNKNOWN`. El nivel RF original se renombra en la consulta a `signal_db`; el conteo original de errores se conserva como `errores_acars`. La normalización de `detected_level` evita que metadatos estructurados anteriores contradigan esa clasificación en esos paneles. Esto es una regla de presentación de consultas; no reescribe el JSON almacenado ni cambia la severidad de Loki para otras consultas. La captura final de DragonOS confirma la presentación INFO, con 9 mensajes, 4 matrículas y 3 mensajes con texto en el intervalo documentado.
+El campo refleja la hora asignada por el ordenador receptor. Su reloj debe estar correcto. Copiar un archivo antiguo a la carpeta de lectura mantiene la fecha de sus registros; no los convierte en mensajes nuevos de la hora actual.
 
-La documentación oficial explica el [lector de archivos de Alloy](https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.file/) y las [etiquetas y la cardinalidad de Loki](https://grafana.com/docs/loki/latest/get-started/labels/). El decodificador upstream es [f00b4r0/acarsdec](https://github.com/f00b4r0/acarsdec); este proyecto integra su ejecución y el flujo de observabilidad sin modificar su código.
+## Cómo se encuentran los mensajes
+
+Loki guarda las etiquetas `job`, `station` y `freq`, junto con etiquetas de archivo que pueda añadir el lector. Estas identifican el origen de los registros. Los campos `tail`, `flight`, `text`, `level` y `noise` siguen dentro del JSON y se extraen durante la consulta.
+
+Esta separación evita crear una combinación de etiquetas indexadas por cada vuelo o matrícula. Es el criterio de [baja cardinalidad recomendado por Loki](https://grafana.com/docs/loki/latest/get-started/labels/).
+
+Grafana utiliza dos clases de consulta:
+
+- **Mensajes:** muestra cada registro y su texto.
+- **Resúmenes:** cuenta registros o calcula promedios de sus valores durante un intervalo.
+
+La lectura numérica de `level` se conserva como `signal_db` en los paneles de mensajes. La clasificación visual INFO/WARN/UNKNOWN se calcula aparte a partir de `error`. Esto permite mostrar una señal de `-15.3` y un estado INFO en el mismo registro sin confundir intensidad con severidad. El JSON original permanece intacto.
+
+## Conexiones entre programas
+
+| Conexión | Dirección usada | Propósito |
+|---|---|---|
+| Navegador → Grafana | `http://localhost:3000` | Abrir el dashboard desde el ordenador de la estación |
+| Grafana → Loki | `http://loki:3100` | Consultar registros por la red de Docker Compose |
+| Alloy → Loki | `http://loki:3100/loki/api/v1/push` | Enviar registros por la misma red |
+| Terminal → Loki | `http://localhost:3100/ready` | Comprobar que el servicio está preparado |
+| `acarsdec` → StatsD/Graphite | `127.0.0.1:8125/UDP` | Salida adicional de estadísticas configurada por el script |
+
+`localhost` identifica al programa que hace la petición. Dentro del contenedor Grafana, `localhost` sería el propio Grafana; el nombre `loki` permite alcanzar al servicio correcto en su red compartida.
+
+La rama StatsD/Graphite transporta estadísticas, no las líneas JSON de los mensajes. El dashboard ACARS de este repositorio consulta Loki. La visualización de métricas ACARS de Graphite queda fuera de los resultados comprobados.
+
+## Qué queda guardado
+
+| Información | Ubicación | Comportamiento |
+|---|---|---|
+| Mensajes originales | `data/acars/`, en el host | Se mantienen aunque se detenga el receptor o Alloy |
+| Posición de lectura de Alloy | Volumen `acars-alloy-data` | Permite continuar la lectura después de reiniciar el colector |
+| Configuración del dashboard | `acars-dashboard.json` | Permite importarlo de nuevo en Grafana |
+| Datos internos de Grafana, Loki y Graphite | Contenedores de los servicios | El Compose incluido no les asigna volúmenes de datos persistentes |
+
+Detener y volver a iniciar los mismos contenedores conserva sus datos internos. Recrearlos puede perder ese estado si no existe un respaldo o una configuración adicional de persistencia. Los archivos JSONL son la copia local de los mensajes recibidos.
+
+Un único programa debe utilizar el RTL-SDR a la vez. SDR# sirve para observar la señal en una sesión separada; durante la captura, el receptor queda a cargo de `acarsdec`.

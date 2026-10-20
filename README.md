@@ -18,7 +18,7 @@ Este proyecto documenta una recepción real de mensajes ACARS con un RTL-SDR Blo
 
 ![Medición SWR de la antena con NanoVNA](imagenes/4.png)
 
-*La gráfica SWR incluye marcadores en 131.725 MHz. Esta captura no proporciona un valor de ganancia ni una medición de cobertura.*
+*Medición de la relación de onda estacionaria (SWR) de la antena, con el marcador en 131.725 MHz.*
 
 ## Resumen del proyecto
 
@@ -67,7 +67,7 @@ Los nombres de campo mantienen separadas las distintas clases de información qu
 | `tail` | Matrícula o identificador de aeronave presente en el mensaje |
 | `flight` | Identificador de vuelo; puede diferir de `tail` |
 | `label` | Etiqueta/código del protocolo ACARS, por ejemplo `80` o `5U` |
-| `mode` | Modo de recepción indicado por ACARSDEC; el valor `2` no significa VDL2 |
+| `mode` | Identificador del modo ACARS; en esta muestra aparece `2` |
 | `level` | Nivel de señal relativo que reporta el decodificador |
 | `noise` | Nivel de ruido relativo que reporta el decodificador |
 | `error` | Conteo de errores que acompaña a cada mensaje recibido |
@@ -146,7 +146,41 @@ Entre los datos de la sesión se observaron estos pares matrícula/vuelo:
 | CC-CPJ | LP2205 | Mensaje `LSRES`, `label=80` |
 | CC-BAH | LP2067 | Mensajes `INIT` y `WXRQ`; también se observó `label=5U` |
 
-En el `INIT` de CC-BAH/LP2067 apareció `SPJC/SPTN`. Se presenta como referencia de ruta escrita en el mensaje. No es una posición GPS ni una coordenada. `WXRQ` es un marcador de solicitud meteorológica ACARS; esta recepción no decodificó imágenes meteorológicas de satélite.
+### Qué significan los mensajes recibidos
+
+La recepción permitió leer información operativa, además de contar mensajes. ACARS es un enlace de datos entre aeronaves y tierra utilizado para intercambiar información de operación y meteorología, entre otros usos. [SITA: aplicaciones de los mensajes ACARS](https://www.sita.aero/globalassets/docs/infographics/aircom-r-cockpit-services-acars-infographic.pdf).
+
+En el mensaje de **CC-BAH**, vuelo **LP2067**, se recibió:
+
+```text
+3G01 INIT   2067/20 SPJC/SPTN .CC-BAH/001
+```
+
+`CC-BAH` identifica la aeronave y `LP2067` el vuelo. `INIT` se interpreta aquí como un mensaje de inicialización de datos del vuelo: reúne el número `2067`, el valor `20` que coincide con el día de la recepción, dos aeropuertos y la matrícula. Es una lectura del texto recibido; no se asigna un significado a los campos internos `3G01` y `/001`.
+
+| Código OACI recibido | Ciudad | Aeropuerto |
+|---|---|---|
+| `SPJC` | Lima / Callao | Internacional Jorge Chávez |
+| `SPTN` | Tacna | Internacional Coronel FAP Carlos Ciriani Santa Rosa |
+| `SPSO` | Pisco | Capitán FAP Renán Elías Olivera |
+| `SPQU` | Arequipa | Internacional Alfredo Rodríguez Ballón |
+
+Las correspondencias se contrastan con el [listado de aeropuertos del MTC](https://cdn.www.gob.pe/uploads/document/file/7419112/6322184-listado-de-aeropuertos%282%29.pdf) y las estaciones meteorológicas de NOAA para [Tacna](https://tgftp.nws.noaa.gov/data/observations/metar/decoded/SPTN.TXT), [Pisco](https://tgftp.nws.noaa.gov/data/observations/metar/decoded/SPSO.TXT) y [Arequipa](https://tgftp.nws.noaa.gov/data/observations/metar/decoded/SPQU.TXT).
+
+Por tanto, **`SPJC/SPTN` se lee como Lima / Tacna**. Si el par está escrito como origen/destino, el sentido indicado es **Lima → Tacna**. Esta interpretación procede del orden del texto; los códigos identifican aeropuertos, pero no indican dónde estaba el avión al transmitir.
+
+Unos segundos después, la misma aeronave envió:
+
+```text
+01 WXRQ   2067/20 SPJC/SPTN .CC-BAH
+/TYP 1/STA SPTN/STA SPSO/STA SPQU
+```
+
+**`WXRQ` significa “Weather request”, solicitud meteorológica**, según el [manual del decodificador AOR ARD-2](https://www.aorja.com/support/discontinued/m/ARD-2_operating_manual.pdf). Las entradas `STA` enumeran Tacna, Pisco y Arequipa: se interpreta como una solicitud de información meteorológica para esas estaciones. La lista no demuestra escalas ni aeropuertos alternos del vuelo. El valor `TYP 1` se conserva sin atribuirle un producto meteorológico concreto.
+
+También llegó `LSRES` seguido de `0001/10`, asociado a CC-CPJ/LP2205. Se conserva como contenido observado, sin asignarle una expansión no verificada. Los seis mensajes restantes tenían el texto vacío: siguen aportando matrícula, vuelo, hora y datos de recepción.
+
+La [lectura detallada de los registros](docs/RESULTADOS.md) explica estos campos, los números de mensaje, `Nak`, el nivel de señal y el ruido con ejemplos de la sesión.
 
 ![Ampliación de las gráficas de nivel y ruido](imagenes/17.png)
 
@@ -156,7 +190,7 @@ En el `INIT` de CC-BAH/LP2067 apareció `SPJC/SPTN`. Se presenta como referencia
 
 La captura permite describir los nueve mensajes conservados y los campos que aparecen en ellos. No permite concluir que todos los paquetes transmitidos fueron recibidos, calcular una tasa de pérdida, deducir la cobertura de la antena ni localizar el receptor. Una línea con `text` vacío puede seguir siendo un frame ACARS válido.
 
-ACARS y VDL2 son protocolos distintos que pueden recibirse en bandas VHF cercanas. Esta integración procesa ACARS; no incluye una recepción VDL2. Los gráficos de monitoreo RF que puedan existir en el stack base son independientes de este dashboard ACARS. Graphite está disponible como parte del stack, pero la visualización presentada aquí se basa en Loki.
+La visualización presentada se basa en los mensajes ACARS almacenados en Loki. La salida StatsD hacia Graphite queda disponible como rama de métricas; los resultados documentados corresponden al flujo JSONL → Alloy → Loki → Grafana.
 
 ![Diagrama del flujo ACARS desde la recepción hasta Grafana](imagenes/18.png)
 
@@ -170,12 +204,11 @@ ACARS y VDL2 son protocolos distintos que pueden recibirse en bandas VHF cercana
 | `docker-compose.acars.yml` | Servicio auxiliar de Alloy para el stack existente |
 | `acars-dashboard.json` | Dashboard de nueve paneles para Grafana |
 | `start-acars.sh` | Configuración del decodificador y salida JSONL/StatsD |
-| [Arquitectura](docs/ARQUITECTURA.md) | Recorrido de datos, puertos y almacenamiento |
-| [Resultados](docs/RESULTADOS.md) | Evidencia de recepción e interpretación de los mensajes |
+| [Arquitectura](docs/ARQUITECTURA.md) | Qué hace cada programa y cómo circula un mensaje |
+| [Lectura de los datos](docs/RESULTADOS.md) | Ejemplos comentados de los mensajes de la sesión |
+| [Guía de uso](docs/GUIA_DE_USO.md) | Programas necesarios, recepción y visualización paso a paso |
 | `imagenes/` | Fotografías, capturas y diagrama del proyecto |
 
 ## Créditos
 
-Esta integración amplía el stack de observabilidad [`alphafox02/dumphfdl-grafana-stack`](https://github.com/alphafox02/dumphfdl-grafana-stack), creado por cemaxecuter para flujos HFDL/VDL2. El stack de origen conserva su identidad y sus atribuciones; este proyecto documenta la incorporación de un flujo ACARS.
-
-La decodificación se realizó con [`f00b4r0/acarsdec`](https://github.com/f00b4r0/acarsdec), proyecto upstream independiente. Este repositorio no reescribe ni reclama autoría del decodificador. La integración propia se publica bajo MIT; `acarsdec` conserva su licencia upstream GPL-2.0-only.
+Proyecto de [Josueeeoo-0](https://github.com/Josueeeoo-0). La decodificación se realizó con [`acarsdec`](https://github.com/f00b4r0/acarsdec), de Thierry Leconte y Thibaut VARENE. La integración propia se publica bajo MIT; `acarsdec` conserva su licencia GPL-2.0-only. Las atribuciones de la configuración y los logotipos se detallan en [NOTICE.md](NOTICE.md).
