@@ -1,0 +1,33 @@
+# Adaptado del stack de alphafox02 / cemaxecuter. Ver NOTICE.md.
+# El colector ACARS se añade mediante docker-compose.acars.yml.
+services:
+  graphite:
+    image: graphiteapp/graphite-statsd:1.1.10-5
+    container_name: graphite
+    ports:
+      - "8080:80"
+      - "2003:2003"
+      - "8125:8125/udp"
+    restart: unless-stopped
+
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana:13.2.3}
+    container_name: grafana
+    depends_on:
+      - graphite
+      - loki
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_DATABASE_WAL=true
+      - GF_DATABASE_SQLITE_BUSY_TIMEOUT=10000
+    restart: unless-stopped
+
+  loki:
+    image: ${LOKI_IMAGE:-grafana/loki:3.7.8}
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    restart: unless-stopped

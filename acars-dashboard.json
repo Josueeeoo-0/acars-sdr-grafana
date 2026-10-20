@@ -1,0 +1,533 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_LOKI",
+      "label": "Loki",
+      "description": "Existing Loki data source",
+      "type": "datasource",
+      "pluginId": "loki",
+      "pluginName": "Loki"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "logs",
+      "name": "Logs",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": "1.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "loki",
+      "name": "Loki",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "description": "Total de líneas ACARS en el rango seleccionado.",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({job=\"acarsdec\"}[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Mensajes en el rango",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "description": "Matrículas tail distintas no vacías en el intervalo; extraídas al consultar.",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "count(count by (tail) (count_over_time({job=\"acarsdec\"} | json | __error__=\"\" | tail != \"\" [$__range]))) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Aeronaves distintas",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "description": "Mensajes cuyo campo text no está vacío en el rango.",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({job=\"acarsdec\"} | json | __error__=\"\" | text != \"\" [$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Mensajes con texto",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "description": "Conteo en ventanas fijas de 1 minuto. Los periodos sin datos quedan como huecos; no se interpretan como cero ni como evidencia de pérdida.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({job=\"acarsdec\"}[1m]))",
+          "refId": "A",
+          "legendFormat": "mensajes/min"
+        }
+      ],
+      "title": "Mensajes por minuto",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "description": "Promedio de level por cola en ventanas de 5 minutos. Valores relativos, no calibrados en dBm; se excluyen errores JSON/unwrap.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: dB relativos"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "avg_over_time({job=\"acarsdec\"} | json tail=\"tail\", level=\"level\" | tail != \"\" | unwrap level | __error__=\"\" [5m]) by (tail)",
+          "refId": "A",
+          "legendFormat": "{{tail}}"
+        }
+      ],
+      "title": "Nivel recibido por matrícula (dB relativos)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "description": "Promedio de noise por cola en ventanas de 5 minutos. Valores relativos, no calibrados en dBm; se excluyen errores JSON/unwrap.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: dB relativos"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 11
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "avg_over_time({job=\"acarsdec\"} | json tail=\"tail\", noise=\"noise\" | tail != \"\" | unwrap noise | __error__=\"\" [5m]) by (tail)",
+          "refId": "A",
+          "legendFormat": "{{tail}}"
+        }
+      ],
+      "title": "Ruido por matrícula (dB relativos)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "description": "JSON original se conserva en Loki; line_format solo cambia la presentación del panel. La frecuencia observada es 131.725 MHz; la ubicación del receptor es desconocida. Severidad de presentación: error=0 → INFO; valor no vacío distinto de 0 → WARN; sin error → UNKNOWN. El nivel RF se conserva como signal_db y el JSON original no cambia.",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "id": 7,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "expr": "{job=\"acarsdec\"} | json | __error__=\"\" | label_format signal_db=level | label_format level=`{{if eq .error \"0\"}}info{{else if .error}}warn{{else}}unknown{{end}}` | label_format detected_level=`{{.level}}` | line_format \"{{.station_id}}  {{.freq}} MHz  {{.tail}}  {{.flight}}  label={{.label}}  nivel_db={{.signal_db}}  noise={{.noise}}  errores_acars={{.error}}  {{.text}}\"",
+          "refId": "A"
+        }
+      ],
+      "title": "Todos los mensajes",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "description": "Solo mensajes con texto no vacío. Los campos se extraen durante la consulta, no se convierten en etiquetas indexadas. Severidad de presentación: error=0 → INFO; valor no vacío distinto de 0 → WARN; sin error → UNKNOWN. El nivel RF se conserva como signal_db y el JSON original no cambia.",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 8,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "expr": "{job=\"acarsdec\"} | json | __error__=\"\" | text != \"\" | label_format signal_db=level | label_format level=`{{if eq .error \"0\"}}info{{else if .error}}warn{{else}}unknown{{end}}` | label_format detected_level=`{{.level}}` | line_format \"{{.timestamp}}  {{.tail}}  {{.flight}}  label={{.label}}  errores_acars={{.error}}  {{.text}}\"",
+          "refId": "A"
+        }
+      ],
+      "title": "Mensajes con texto",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "description": "Marcadores WXRQ e INIT hallados dentro de text. INIT puede incluir referencias de ruta como SPJC/SPTN; son referencias declaradas por el mensaje, no posiciones ni coordenadas. Severidad de presentación: error=0 → INFO; valor no vacío distinto de 0 → WARN; sin error → UNKNOWN. El nivel RF se conserva como signal_db y el JSON original no cambia.",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "id": 9,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "expr": "{job=\"acarsdec\"} | json | __error__=\"\" | text=~\"(?s).*WXRQ.*\" | label_format signal_db=level | label_format level=`{{if eq .error \"0\"}}info{{else if .error}}warn{{else}}unknown{{end}}` | label_format detected_level=`{{.level}}` | line_format \"WXRQ  {{.tail}}  {{.flight}}  errores_acars={{.error}}  {{.text}}\"",
+          "refId": "A"
+        },
+        {
+          "expr": "{job=\"acarsdec\"} | json | __error__=\"\" | text=~\"(?s).*INIT.*\" | label_format signal_db=level | label_format level=`{{if eq .error \"0\"}}info{{else if .error}}warn{{else}}unknown{{end}}` | label_format detected_level=`{{.level}}` | line_format \"INIT  {{.tail}}  {{.flight}}  errores_acars={{.error}}  {{.text}}\"",
+          "refId": "B"
+        }
+      ],
+      "title": "WXRQ e INIT",
+      "type": "logs"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "acars",
+    "loki"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m"
+    ]
+  },
+  "timezone": "browser",
+  "title": "ACARS - Loki",
+  "uid": "acars-loki",
+  "version": 4,
+  "weekStart": ""
+}

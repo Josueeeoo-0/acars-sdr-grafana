@@ -1,0 +1,23 @@
+# Datos recibidos y muestras; se publica configuración y documentación.
+/data/
+/backups/
+/airband_rf/
+/dumpvdl2/
+/statsd-c-client/
+/validation-tools/
+/extras/
+*.jsonl
+*.u8
+*.wav
+*.f32
+*.zip
+*.tar.gz
+*.bak
+*.log
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db

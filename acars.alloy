@@ -1,0 +1,45 @@
+loki.source.file "acarsdec" {
+  targets = [{
+    __path__ = "/logs/*.jsonl",
+    job      = "acarsdec",
+  }]
+  tail_from_end = false
+  file_match {
+    enabled = true
+    sync_period = "5s"
+  }
+  forward_to = [loki.process.acarsdec.receiver]
+}
+
+loki.process "acarsdec" {
+  // Parse only low-cardinality fields used for Loki labels and event time.
+  // The original JSON line remains the log entry unless stage.output is used.
+  stage.json {
+    expressions = {
+      event_ts = "timestamp",
+      station  = "station_id",
+      freq     = "freq",
+    }
+  }
+
+  stage.timestamp {
+    source = "event_ts"
+    format = "Unix"
+    action_on_failure = "skip"
+  }
+
+  stage.labels {
+    values = {
+      station = "station",
+      freq    = "freq",
+    }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
