@@ -21,7 +21,7 @@ Docker ejecuta los servicios de observación. El acceso al receptor USB lo reali
 
 1. El receptor se sintoniza en **131.725 MHz** y entrega las muestras a `acarsdec`.
 2. Cuando el decodificador reconoce un mensaje, imprime sus campos y escribe un objeto JSON en una línea del archivo. **JSONL** significa precisamente un objeto JSON por línea.
-3. El script `start-acars.sh` guarda los archivos en `data/acars/`. La opción `rotate=daily` añade una fecha UTC al nombre: por ejemplo, `acars_20261020.jsonl`.
+3. El script `scripts/start-acars.sh` guarda los archivos en `data/acars/`. La opción `rotate=daily` añade una fecha UTC al nombre: por ejemplo, `acars_20261020.jsonl`.
 4. Alloy ve esa misma carpeta como `/logs` dentro del contenedor. El montaje es de solo lectura: puede leer la captura, pero no modificarla.
 5. Alloy descubre los archivos `*.jsonl` cada cinco segundos. Extrae `timestamp`, `station_id` y `freq`; utiliza el primero como hora del registro y los otros dos como etiquetas.
 6. Loki recibe la línea JSON original. Cuando Grafana solicita un intervalo, Loki busca los registros correspondientes y devuelve los resultados de la consulta.
@@ -71,15 +71,17 @@ La rama StatsD/Graphite transporta estadísticas, no las líneas JSON de los men
 |---|---|---|
 | Mensajes originales | `data/acars/`, en el host | Se mantienen aunque se detenga el receptor o Alloy |
 | Posición de lectura de Alloy | Volumen `acars-alloy-data` | Permite continuar la lectura después de reiniciar el colector |
-| Configuración del dashboard | `acars-dashboard.json` | Permite importarlo de nuevo en Grafana |
+| Configuración del dashboard | `dashboards/acars-dashboard.json` | Permite importarlo de nuevo en Grafana |
 | Datos internos de Grafana, Loki y Graphite | Contenedores de los servicios | El Compose incluido no les asigna volúmenes de datos persistentes |
 
 Detener y volver a iniciar los mismos contenedores conserva sus datos internos. Recrearlos puede perder ese estado si no existe un respaldo o una configuración adicional de persistencia. Los archivos JSONL son la copia local de los mensajes recibidos.
 
 Un único programa debe utilizar el RTL-SDR a la vez. SDR# sirve para observar la señal en una sesión separada; durante la captura, el receptor queda a cargo de `acarsdec`.
 
-## Reproducción de la muestra guardada
+## Dónde está cada configuración
 
-La [muestra incluida](../ejemplos/README.md) tiene un recorrido separado: `ejemplos/recepcion_acars.jsonl` → `scripts/cargar_muestra.py` → Loki → Grafana. El cargador envía directamente las líneas JSON, sin abrir el receptor ni pasar por Alloy.
+`config/compose.yaml` reúne los cuatro servicios Docker. `config/acars.alloy` define la lectura de JSONL y el destino Loki. `scripts/stack.sh` ejecuta Compose con la raíz del repositorio como directorio del proyecto; de ese modo, las rutas de los montajes apuntan siempre a `config/acars.alloy` y `data/acars/`, aunque se invoque desde otra carpeta.
 
-Los registros reproducidos usan `job="acarsdec-demo"`; los de recepción real mantienen `job="acarsdec"`. El selector **Origen de datos** del dashboard elige cuál consultar. El cargador conserva el texto y el timestamp del JSON, y desplaza solo la hora de ingestión al presente para que la demostración pueda verse en un intervalo reciente.
+`config/.env.example` documenta las versiones y la contraseña inicial de Grafana. La copia personal `.env` se guarda en la raíz y está excluida de Git. `scripts/start-acars.sh` también resuelve la raíz antes de crear los archivos de recepción.
+
+La [muestra publicada](../muestras/README.md) se guarda en `muestras/recepcion_acars.jsonl` como evidencia de la sesión. Alloy solo lee `data/acars/`; no vuelve a enviar automáticamente los registros de `muestras/`.

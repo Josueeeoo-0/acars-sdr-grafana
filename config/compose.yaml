@@ -1,5 +1,5 @@
-# Adaptado del stack de alphafox02 / cemaxecuter. Ver NOTICE.md.
-# El colector ACARS se añade mediante docker-compose.acars.yml.
+# Configuración de la estación ACARS. Atribuciones en ../NOTICE.md.
+# Usar desde scripts/stack.sh para resolver las rutas desde la raíz del proyecto.
 services:
   graphite:
     image: graphiteapp/graphite-statsd:1.1.10-5
@@ -31,3 +31,18 @@ services:
     ports:
       - "3100:3100"
     restart: unless-stopped
+
+  acars-collector:
+    image: grafana/alloy:v1.21.0
+    command:
+      - run
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./config/acars.alloy:/etc/alloy/config.alloy:ro
+      - ./data/acars:/logs:ro
+      - acars-alloy-data:/var/lib/alloy/data
+    restart: unless-stopped
+
+volumes:
+  acars-alloy-data:

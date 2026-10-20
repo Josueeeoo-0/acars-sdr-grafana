@@ -96,7 +96,7 @@
       },
       "targets": [
         {
-          "expr": "sum(count_over_time({job=\"$acars_job\"}[$__range])) or vector(0)",
+          "expr": "sum(count_over_time({job=\"acarsdec\"}[$__range])) or vector(0)",
           "refId": "A",
           "instant": true
         }
@@ -149,7 +149,7 @@
       },
       "targets": [
         {
-          "expr": "count(count by (tail) (count_over_time({job=\"$acars_job\"} | json | __error__=\"\" | tail != \"\" [$__range]))) or vector(0)",
+          "expr": "count(count by (tail) (count_over_time({job=\"acarsdec\"} | json | __error__=\"\" | tail != \"\" [$__range]))) or vector(0)",
           "refId": "A",
           "instant": true
         }
@@ -202,7 +202,7 @@
       },
       "targets": [
         {
-          "expr": "sum(count_over_time({job=\"$acars_job\"} | json | __error__=\"\" | text != \"\" [$__range])) or vector(0)",
+          "expr": "sum(count_over_time({job=\"acarsdec\"} | json | __error__=\"\" | text != \"\" [$__range])) or vector(0)",
           "refId": "A",
           "instant": true
         }
@@ -262,7 +262,7 @@
       },
       "targets": [
         {
-          "expr": "sum(count_over_time({job=\"$acars_job\"}[1m]))",
+          "expr": "sum(count_over_time({job=\"acarsdec\"}[1m]))",
           "refId": "A",
           "legendFormat": "mensajes/min"
         }
@@ -322,7 +322,7 @@
       },
       "targets": [
         {
-          "expr": "avg_over_time({job=\"$acars_job\"} | json tail=\"tail\", level=\"level\" | tail != \"\" | unwrap level | __error__=\"\" [5m]) by (tail)",
+          "expr": "avg_over_time({job=\"acarsdec\"} | json tail=\"tail\", level=\"level\" | tail != \"\" | unwrap level | __error__=\"\" [5m]) by (tail)",
           "refId": "A",
           "legendFormat": "{{tail}}"
         }
@@ -382,7 +382,7 @@
       },
       "targets": [
         {
-          "expr": "avg_over_time({job=\"$acars_job\"} | json tail=\"tail\", noise=\"noise\" | tail != \"\" | unwrap noise | __error__=\"\" [5m]) by (tail)",
+          "expr": "avg_over_time({job=\"acarsdec\"} | json tail=\"tail\", noise=\"noise\" | tail != \"\" | unwrap noise | __error__=\"\" [5m]) by (tail)",
           "refId": "A",
           "legendFormat": "{{tail}}"
         }
@@ -419,7 +419,7 @@
       },
       "targets": [
         {
-          "expr": "{job=\"$acars_job\"} | json | __error__=\"\" | label_format signal_db=level | label_format level=`{{if eq .error \"0\"}}info{{else if .error}}warn{{else}}unknown{{end}}` | label_format detected_level=`{{.level}}` | line_format \"{{.station_id}}  {{.freq}} MHz  {{.tail}}  {{.flight}}  label={{.label}}  nivel_db={{.signal_db}}  noise={{.noise}}  errores_acars={{.error}}  {{.text}}\"",
+          "expr": "{job=\"acarsdec\"} | json | __error__=\"\" | label_format signal_db=level | label_format level=`{{if eq .error \"0\"}}info{{else if .error}}warn{{else}}unknown{{end}}` | label_format detected_level=`{{.level}}` | line_format \"{{.station_id}}  {{.freq}} MHz  {{.tail}}  {{.flight}}  label={{.label}}  nivel_db={{.signal_db}}  noise={{.noise}}  errores_acars={{.error}}  {{.text}}\"",
           "refId": "A"
         }
       ],
@@ -455,7 +455,7 @@
       },
       "targets": [
         {
-          "expr": "{job=\"$acars_job\"} | json | __error__=\"\" | text != \"\" | label_format signal_db=level | label_format level=`{{if eq .error \"0\"}}info{{else if .error}}warn{{else}}unknown{{end}}` | label_format detected_level=`{{.level}}` | line_format \"{{.timestamp}}  {{.tail}}  {{.flight}}  label={{.label}}  errores_acars={{.error}}  {{.text}}\"",
+          "expr": "{job=\"acarsdec\"} | json | __error__=\"\" | text != \"\" | label_format signal_db=level | label_format level=`{{if eq .error \"0\"}}info{{else if .error}}warn{{else}}unknown{{end}}` | label_format detected_level=`{{.level}}` | line_format \"{{.timestamp}}  {{.tail}}  {{.flight}}  label={{.label}}  errores_acars={{.error}}  {{.text}}\"",
           "refId": "A"
         }
       ],
@@ -491,11 +491,11 @@
       },
       "targets": [
         {
-          "expr": "{job=\"$acars_job\"} | json | __error__=\"\" | text=~\"(?s).*WXRQ.*\" | label_format signal_db=level | label_format level=`{{if eq .error \"0\"}}info{{else if .error}}warn{{else}}unknown{{end}}` | label_format detected_level=`{{.level}}` | line_format \"WXRQ  {{.tail}}  {{.flight}}  errores_acars={{.error}}  {{.text}}\"",
+          "expr": "{job=\"acarsdec\"} | json | __error__=\"\" | text=~\"(?s).*WXRQ.*\" | label_format signal_db=level | label_format level=`{{if eq .error \"0\"}}info{{else if .error}}warn{{else}}unknown{{end}}` | label_format detected_level=`{{.level}}` | line_format \"WXRQ  {{.tail}}  {{.flight}}  errores_acars={{.error}}  {{.text}}\"",
           "refId": "A"
         },
         {
-          "expr": "{job=\"$acars_job\"} | json | __error__=\"\" | text=~\"(?s).*INIT.*\" | label_format signal_db=level | label_format level=`{{if eq .error \"0\"}}info{{else if .error}}warn{{else}}unknown{{end}}` | label_format detected_level=`{{.level}}` | line_format \"INIT  {{.tail}}  {{.flight}}  errores_acars={{.error}}  {{.text}}\"",
+          "expr": "{job=\"acarsdec\"} | json | __error__=\"\" | text=~\"(?s).*INIT.*\" | label_format signal_db=level | label_format level=`{{if eq .error \"0\"}}info{{else if .error}}warn{{else}}unknown{{end}}` | label_format detected_level=`{{.level}}` | line_format \"INIT  {{.tail}}  {{.flight}}  errores_acars={{.error}}  {{.text}}\"",
           "refId": "B"
         }
       ],
@@ -511,35 +511,7 @@
     "loki"
   ],
   "templating": {
-    "list": [
-      {
-        "name": "acars_job",
-        "label": "Origen de datos",
-        "type": "custom",
-        "query": "acarsdec,acarsdec-demo",
-        "current": {
-          "selected": true,
-          "text": "acarsdec",
-          "value": "acarsdec"
-        },
-        "options": [
-          {
-            "selected": true,
-            "text": "acarsdec",
-            "value": "acarsdec"
-          },
-          {
-            "selected": false,
-            "text": "acarsdec-demo",
-            "value": "acarsdec-demo"
-          }
-        ],
-        "includeAll": false,
-        "multi": false,
-        "hide": 0,
-        "skipUrlSync": false
-      }
-    ]
+    "list": []
   },
   "time": {
     "from": "now-24h",
@@ -556,6 +528,6 @@
   "timezone": "browser",
   "title": "ACARS - Loki",
   "uid": "acars-loki",
-  "version": 5,
+  "version": 6,
   "weekStart": ""
 }

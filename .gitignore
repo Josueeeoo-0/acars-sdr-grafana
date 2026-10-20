@@ -1,13 +1,8 @@
 # Capturas locales; la muestra documentada se publica como excepción.
 /data/
 /backups/
-/airband_rf/
-/dumpvdl2/
-/statsd-c-client/
-/validation-tools/
-/extras/
 *.jsonl
-!/ejemplos/recepcion_acars.jsonl
+!/muestras/recepcion_acars.jsonl
 *.u8
 *.wav
 *.f32
@@ -19,6 +14,6 @@ __pycache__/
 *.pyc
 .env
 .env.*
-!.env.example
+!config/.env.example
 .DS_Store
 Thumbs.db

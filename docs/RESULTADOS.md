@@ -1,6 +1,6 @@
 # Cómo leer los datos recibidos
 
-El dashboard resume una sesión; este documento explica los registros que hay detrás de sus números. Los ejemplos proceden de la recepción del **20 de octubre de 2026 en 131.725 MHz**. Los nueve mensajes se conservan en [la muestra JSONL](../ejemplos/recepcion_acars.jsonl) y pueden [reproducirse sin receptor](../ejemplos/README.md). Para iniciar una recepción propia, véase la [guía de uso](GUIA_DE_USO.md).
+El dashboard resume una sesión; este documento explica los registros que hay detrás de sus números. Los ejemplos proceden de la recepción del **20 de octubre de 2026 en 131.725 MHz**. Los nueve registros originales se conservan en [la muestra JSONL](../muestras/recepcion_acars.jsonl), con sus timestamps de recepción, y se pueden descargar o leer directamente como texto. Para iniciar una recepción propia, véase la [guía de uso](GUIA_DE_USO.md).
 
 ## Una aeronave y un vuelo son identificadores distintos
 
@@ -71,7 +71,7 @@ El registro permite asociar ese texto a una hora, aeronave y vuelo. No se dispon
 
 ## Los mensajes sin texto también cuentan
 
-Seis de los nueve registros tenían `text` vacío y etiqueta `_d`. Aun así, incluían datos de identificación y recepción, por lo que forman parte del total de mensajes. La [ayuda de acarsdec](https://github.com/f00b4r0/acarsdec#common-options) incluye expresamente los mensajes `_d` entre los ejemplos de mensajes vacíos que pueden filtrarse con `-e`. El script de este proyecto conserva esos registros.
+Seis de los nueve registros tenían `text` vacío y etiqueta `_d`. Aun así, incluían datos de identificación y recepción, por lo que forman parte del total de mensajes. La [ayuda de acarsdec](https://github.com/f00b4r0/acarsdec#common-options) incluye expresamente los mensajes `_d` entre los ejemplos de mensajes vacíos que pueden filtrarse con `-e`. Estos registros permanecen en la muestra original.
 
 Los campos `label=80` y `label=5U` son códigos de mensaje ACARS. No son una potencia, una frecuencia ni el número de errores. `mode=2` es el identificador de modo ACARS que apareció en los registros de esta sesión.
 

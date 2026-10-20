@@ -198,19 +198,29 @@ La visualización presentada se basa en los mensajes ACARS almacenados en Loki. 
 
 ## Componentes del proyecto
 
-La muestra de la sesión se conserva en [`ejemplos/recepcion_acars.jsonl`](ejemplos/recepcion_acars.jsonl): nueve registros, cuatro matrículas y tres mensajes con texto. El [procedimiento de reproducción](ejemplos/README.md) permite explorarla en Loki y Grafana sin conectar un RTL-SDR. El archivo conserva las fechas originales; el cargador identifica la reproducción con `job="acarsdec-demo"` y desplaza únicamente las horas de ingestión para consultarla en un intervalo reciente.
+La muestra de la sesión se conserva como evidencia en [`muestras/recepcion_acars.jsonl`](muestras/recepcion_acars.jsonl): nueve registros JSONL originales, con sus timestamps de recepción. El archivo se puede leer directamente en GitHub. Corresponde a la recepción del 20 de octubre de 2026, entre 19:14 y 19:27 UTC, y contiene cuatro matrículas y tres mensajes con texto.
 
-El dashboard permite elegir **Origen de datos**: `acarsdec` para recepción de la estación o `acarsdec-demo` para la muestra reproducida. Los mensajes de ambos orígenes se consultan por separado.
+La estructura del proyecto agrupa la configuración, el dashboard, los scripts, la muestra, la documentación y las imágenes por propósito:
+
+```text
+config/       Compose, Alloy y ejemplo de variables de entorno
+dashboards/   Dashboard de Grafana
+scripts/      Inicio del receptor y control del stack
+muestras/     JSONL original y nota de procedencia
+docs/         Guía de uso, arquitectura y resultados
+imagenes/     Fotografías, capturas y diagrama
+```
 
 | Archivo o carpeta | Propósito |
 |---|---|
-| `acars.alloy` | Lectura de JSONL, asignación de timestamp y etiquetas de baja cardinalidad |
-| `docker-compose.acars.yml` | Servicio auxiliar de Alloy para el stack existente |
-| `acars-dashboard.json` | Dashboard de nueve paneles para Grafana |
-| `start-acars.sh` | Configuración del decodificador y salida JSONL/StatsD |
-| `ejemplos/recepcion_acars.jsonl` | Los nueve mensajes de la sesión documentada |
-| [Muestra y reproducción](ejemplos/README.md) | Procedencia de los datos y visualización sin receptor |
-| `scripts/cargar_muestra.py` | Validación de la muestra y envío a Loki con Python 3 |
+| `config/compose.yaml` | Stack de servicios de observabilidad |
+| `config/acars.alloy` | Lectura de JSONL, asignación de timestamp y etiquetas de baja cardinalidad |
+| `config/.env.example` | Variables de entorno de ejemplo |
+| `dashboards/acars-dashboard.json` | Dashboard de nueve paneles para Grafana |
+| `scripts/start-acars.sh` | Inicio del receptor ACARS en el equipo SDR |
+| `scripts/stack.sh` | Control del stack Docker Compose |
+| `muestras/recepcion_acars.jsonl` | Registros originales de la sesión documentada |
+| [Muestra](muestras/README.md) | Procedencia y alcance de los registros conservados |
 | [Arquitectura](docs/ARQUITECTURA.md) | Qué hace cada programa y cómo circula un mensaje |
 | [Lectura de los datos](docs/RESULTADOS.md) | Ejemplos comentados de los mensajes de la sesión |
 | [Guía de uso](docs/GUIA_DE_USO.md) | Programas necesarios, recepción y visualización paso a paso |
